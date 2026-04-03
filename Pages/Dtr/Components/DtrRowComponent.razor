@@ -1,0 +1,183 @@
+@inject DebounceService Debounce
+
+<MudTd>
+    <MudTextField @bind-Value="_entry.Date"
+                  Placeholder="yyyy-MM-dd"
+                  Variant="Variant.Text"
+                  Margin="Margin.Dense"
+                  OnBlur="Save" />
+</MudTd>
+<MudTd>
+    <MudTextField @bind-Value="_entry.MorningLogin"
+                  Placeholder="08:00 AM"
+                  Variant="Variant.Text"
+                  Margin="Margin.Dense"
+                  OnBlur="SaveTimeField" />
+</MudTd>
+<MudTd>
+    <MudTextField @bind-Value="_entry.MorningLogout"
+                  Placeholder="12:00 PM"
+                  Variant="Variant.Text"
+                  Margin="Margin.Dense"
+                  OnBlur="SaveTimeField" />
+</MudTd>
+<MudTd>
+    <MudTextField @bind-Value="_entry.AfternoonLogin"
+                  Placeholder="01:00 PM"
+                  Variant="Variant.Text"
+                  Margin="Margin.Dense"
+                  OnBlur="SaveTimeField" />
+</MudTd>
+<MudTd>
+    <MudTextField @bind-Value="_entry.AfternoonLogout"
+                  Placeholder="05:00 PM"
+                  Variant="Variant.Text"
+                  Margin="Margin.Dense"
+                  OnBlur="SaveTimeField" />
+</MudTd>
+<MudTd>
+    <MudText Typo="Typo.body2">@_entry.Hours.ToString("F2")</MudText>
+</MudTd>
+<MudTd>
+    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                   Color="Color.Error"
+                   Size="Size.Small"
+                   OnClick="Delete" />
+</MudTd>
+
+@code {
+    #region Fields
+    private DtrEntryModel _entry = new();
+    #endregion
+
+    #region Parameters
+    [Parameter] public DtrEntryModel Entry { get; set; } = new();
+    [Parameter] public EventCallback<DtrEntryModel> OnChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDelete { get; set; }
+    #endregion
+
+    #region Lifecycle
+    protected override void OnParametersSet()
+    {
+        _entry = new DtrEntryModel
+        {
+            Key = Entry.Key,
+            Date = Entry.Date,
+            MorningLogin = Entry.MorningLogin,
+            MorningLogout = Entry.MorningLogout,
+            AfternoonLogin = Entry.AfternoonLogin,
+            AfternoonLogout = Entry.AfternoonLogout,
+            Hours = Entry.Hours
+        };
+    }
+    #endregion
+
+    #region Methods
+    private async Task SaveTimeField()
+    {
+        _entry.MorningLogin = ParseNumericTime(_entry.MorningLogin);
+        _entry.MorningLogout = ParseNumericTime(_entry.MorningLogout);
+        _entry.AfternoonLogin = ParseNumericTime(_entry.AfternoonLogin);
+        _entry.AfternoonLogout = ParseNumericTime(_entry.AfternoonLogout);
+        _entry.Hours = CalculateHours();
+        await Save();
+    }
+
+    private async Task Save()
+    {
+        await Debounce.DebounceAsync(() => OnChanged.InvokeAsync(_entry), 500);
+    }
+
+    private async Task Delete()
+    {
+        if (_entry.Key is not null)
+            await OnDelete.InvokeAsync(_entry.Key);
+    }
+
+    private double CalculateHours()
+    {
+        double morningMinutes = 0;
+        double afternoonMinutes = 0;
+
+        int mLogin = GetMinutes(_entry.MorningLogin);
+        int mLogout = GetMinutes(_entry.MorningLogout);
+        int aLogin = GetMinutes(_entry.AfternoonLogin);
+        int aLogout = GetMinutes(_entry.AfternoonLogout);
+
+        if (mLogin > 0 && mLogout > 0)
+        {
+            int diff = mLogout - mLogin;
+            if (diff < 0) diff += 24 * 60; // next-day logout
+            morningMinutes = diff;
+        }
+
+        if (aLogin > 0 && aLogout > 0)
+        {
+            int diff = aLogout - aLogin;
+            if (diff < 0) diff += 24 * 60;
+            afternoonMinutes = diff;
+        }
+
+        return Math.Round((morningMinutes + afternoonMinutes) / 60.0, 2);
+    }
+
+    /// <summary>
+    /// Parses numeric shorthand to 12-hour time. E.g. "535" → "05:35 AM", "1300" → "01:00 PM".
+    /// Non-numeric input is returned unchanged.
+    /// </summary>
+    private static string ParseNumericTime(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return input;
+
+        var digits = new string(input.Where(char.IsDigit).ToArray());
+        if (digits.Length == 0) return input;
+
+        // If it already looks like "08:00 AM", pass through
+        if (input.Contains(':')) return input;
+
+        int h24, m;
+        if (digits.Length <= 2)
+        {
+            h24 = int.Parse(digits);
+            m = 0;
+        }
+        else if (digits.Length == 3)
+        {
+            h24 = int.Parse(digits[..1]);
+            m = int.Parse(digits[1..]);
+        }
+        else
+        {
+            h24 = int.Parse(digits[..2]);
+            m = int.Parse(digits[2..4]);
+        }
+
+        if (h24 > 23) h24 = 0;
+        if (m > 59) m = 0;
+
+        var ampm = h24 >= 12 ? "PM" : "AM";
+        int h12 = h24 % 12;
+        if (h12 == 0) h12 = 12;
+
+        return $"{h12:D2}:{m:D2} {ampm}";
+    }
+
+    /// <summary>Converts a "HH:MM AM/PM" string to minutes since midnight.</summary>
+    private static int GetMinutes(string time)
+    {
+        if (string.IsNullOrWhiteSpace(time)) return 0;
+        var match = System.Text.RegularExpressions.Regex.Match(
+            time.Trim(), @"(\d{1,2}):(\d{2})\s*(AM|PM)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (!match.Success) return 0;
+
+        int h = int.Parse(match.Groups[1].Value);
+        int min = int.Parse(match.Groups[2].Value);
+        string ampm = match.Groups[3].Value.ToUpper();
+
+        if (ampm == "PM" && h < 12) h += 12;
+        else if (ampm == "AM" && h == 12) h = 0;
+
+        return h * 60 + min;
+    }
+    #endregion
+}

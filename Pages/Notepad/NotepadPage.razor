@@ -1,0 +1,204 @@
+@page "/notepad"
+@implements IDisposable
+@inject IJSRuntime JSRuntime
+@inject DebounceService Debounce
+
+<PageTitle>Online Notepad</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+        <MudText Typo="Typo.h5"><b>Online Notepad</b></MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            @_wordCount words &nbsp;|&nbsp; @_charCount characters &nbsp;|&nbsp;
+            <span style="color: @(_saveStatus == "Saved" ? "green" : "gray");">@_saveStatus</span>
+        </MudText>
+    </MudStack>
+
+    @if (_isLoading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-3" />
+    }
+
+    <NotepadTabBarComponent Tabs="_tabs"
+                            ActiveTab="_activeTab"
+                            OnTabSelected="SelectTab"
+                            OnNewTab="CreateNewTabAsync"
+                            OnCloseTab="CloseTabAsync"
+                            OnReorderTab="ReorderTab" />
+
+    <MudPaper Elevation="2" Class="mt-0">
+        <NotepadEditorComponent Tab="_activeTab"
+                                OnContentChanged="HandleContentChanged" />
+    </MudPaper>
+
+    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2 px-1">
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            Ctrl+S save &nbsp;|&nbsp; Ctrl+N new tab &nbsp;|&nbsp; Ctrl+W close tab
+        </MudText>
+        <MudStack Row="true" Spacing="1">
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                       OnClick="ClearContent" Disabled="@(_activeTab is null)">
+                Clear
+            </MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="SaveCurrentTabAsync" Disabled="@(_activeTab is null)">
+                Save
+            </MudButton>
+        </MudStack>
+    </MudStack>
+</MudContainer>
+
+@code {
+    #region Fields
+    private List<NotepadTabModel> _tabs = new();
+    private NotepadTabModel? _activeTab;
+    private bool _isLoading = true;
+    private string _saveStatus = "All changes saved";
+    private int _wordCount;
+    private int _charCount;
+    private DotNetObjectReference<NotepadPage>? _dotNetRef;
+    #endregion
+
+    #region Lifecycle
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("dbFunctions.notepad.init", _dotNetRef);
+            await JSRuntime.InvokeVoidAsync("dbFunctions.notepad.addKeyListeners", _dotNetRef);
+        }
+    }
+
+    public void Dispose()
+    {
+        JSRuntime.InvokeVoidAsync("dbFunctions.notepad.detach");
+        _dotNetRef?.Dispose();
+    }
+    #endregion
+
+    #region Methods — Supabase callbacks
+    [JSInvokable]
+    public void UpdateTabs(string tabsJson)
+    {
+        var incoming = System.Text.Json.JsonSerializer.Deserialize<List<NotepadTabModel>>(tabsJson)
+            ?? new List<NotepadTabModel>();
+        _tabs = incoming.OrderBy(t => t.Order).ThenBy(t => t.CreatedAt).ToList();
+        _isLoading = false;
+
+        if (_activeTab is not null)
+        {
+            // Re-sync active tab content from Supabase without losing caret position
+            var updated = _tabs.FirstOrDefault(t => t.Key == _activeTab.Key);
+            if (updated is not null) _activeTab = updated;
+        }
+        else if (_tabs.Count > 0)
+        {
+            _activeTab = _tabs[0];
+        }
+
+        UpdateCounts();
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnTabReordered(string key, int newIndex)
+    {
+        var tab = _tabs.FirstOrDefault(t => t.Key == key);
+        if (tab is null) return;
+        _tabs.Remove(tab);
+        _tabs.Insert(Math.Min(newIndex, _tabs.Count), tab);
+        // Persist new order to Supabase
+        for (int i = 0; i < _tabs.Count; i++)
+        {
+            _tabs[i].Order = i;
+            var json = System.Text.Json.JsonSerializer.Serialize(_tabs[i]);
+            JSRuntime.InvokeVoidAsync("dbFunctions.notepad.saveTab", _tabs[i].Key, json);
+        }
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public Task SaveCurrentTab() => SaveCurrentTabAsync();
+
+    [JSInvokable]
+    public Task CreateNewTab() => CreateNewTabAsync();
+
+    [JSInvokable]
+    public Task CloseCurrentTab() => CloseTabAsync(_activeTab);
+    #endregion
+
+    #region Methods — UI handlers
+    private void SelectTab(NotepadTabModel tab)
+    {
+        _activeTab = tab;
+        UpdateCounts();
+    }
+
+    private async Task CreateNewTabAsync()
+    {
+        var newTab = new NotepadTabModel
+        {
+            Title = "Untitled",
+            Content = "",
+            Order = _tabs.Count,
+            CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        };
+        var json = System.Text.Json.JsonSerializer.Serialize(newTab);
+        var key = await JSRuntime.InvokeAsync<string>("dbFunctions.notepad.pushTab", json);
+        // Supabase realtime will update _tabs automatically
+    }
+
+    private async Task CloseTabAsync(NotepadTabModel? tab)
+    {
+        if (tab?.Key is null) return;
+        await JSRuntime.InvokeVoidAsync("dbFunctions.notepad.deleteTab", tab.Key);
+        // Supabase realtime will remove from _tabs
+    }
+
+    private async Task HandleContentChanged(string content)
+    {
+        if (_activeTab is null) return;
+        _activeTab.Content = content;
+        UpdateCounts();
+        _saveStatus = "Saving...";
+        await Debounce.DebounceAsync(async () =>
+        {
+            await SaveCurrentTabAsync();
+            _saveStatus = "Saved";
+            StateHasChanged();
+        }, 1000);
+    }
+
+    private async Task SaveCurrentTabAsync()
+    {
+        if (_activeTab?.Key is null) return;
+        var json = System.Text.Json.JsonSerializer.Serialize(_activeTab);
+        await JSRuntime.InvokeVoidAsync("dbFunctions.notepad.saveTab", _activeTab.Key, json);
+        _saveStatus = "Saved";
+    }
+
+    private void ClearContent()
+    {
+        if (_activeTab is null) return;
+        _activeTab.Content = "";
+        UpdateCounts();
+        StateHasChanged();
+        _ = Debounce.DebounceAsync(SaveCurrentTabAsync, 500);
+    }
+
+    private void ReorderTab((string Key, int NewIndex) args)
+    {
+        OnTabReordered(args.Key, args.NewIndex);
+    }
+
+    private void UpdateCounts()
+    {
+        var content = _activeTab?.Content ?? "";
+        _charCount = content.Length;
+        _wordCount = string.IsNullOrWhiteSpace(content)
+            ? 0
+            : content.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+    }
+    #endregion
+}

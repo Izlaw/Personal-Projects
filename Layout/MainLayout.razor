@@ -1,0 +1,115 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    @if (_showShell)
+    {
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                           Color="Color.Inherit"
+                           Edge="Edge.Start"
+                           OnClick="@(() => _drawerOpen = !_drawerOpen)" />
+            <MudText Typo="Typo.h6" Class="ml-2">Personal Projects</MudText>
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Filled.Home"
+                           Color="Color.Inherit"
+                           Href="/"
+                           title="Hub" />
+        </MudAppBar>
+
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Variant="DrawerVariant.Responsive">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.subtitle1" Class="mt-1"><b>Projects</b></MudText>
+            </MudDrawerHeader>
+            <NavMenuComponent />
+        </MudDrawer>
+    }
+
+    <MudMainContent Class="@(_showShell ? "" : "pa-0")">
+        @Body
+    </MudMainContent>
+
+    @if (_showShell)
+    {
+        <MudAppBar Class="footerbar" Fixed Elevation="0" Dense Bottom>
+            <MudText Typo="Typo.caption" Class="mr-2">v1.0.0</MudText>
+            <MudIconButton Class="footerbar__btn-hardreload"
+                           OnClick="RefreshPage"
+                           Icon="@Icons.Material.Filled.Refresh"
+                           Size="Size.Small"
+                           aria-label="Refresh Page"
+                           Color="Color.Inherit" />
+            <MudSpacer />
+            <MudText Typo="Typo.caption">
+                <div @ref="_timeElement"></div>
+            </MudText>
+        </MudAppBar>
+    }
+</MudLayout>
+
+@code {
+    #region Fields
+    private bool _drawerOpen = false;
+    private bool _showShell = false;
+    private ElementReference _timeElement;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#38387A",
+            Secondary = "#ffcc00",
+            AppbarBackground = "#000092",
+            TextPrimary = "#ffffff"
+        }
+    };
+    #endregion
+
+    #region Lifecycle
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        UpdateShellVisibility();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _showShell)
+        {
+            await JSRuntime.InvokeVoidAsync("startTime", _timeElement);
+        }
+    }
+    #endregion
+
+    #region Methods
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        UpdateShellVisibility();
+        StateHasChanged();
+    }
+
+    private void UpdateShellVisibility()
+    {
+        var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).TrimEnd('/');
+        // Hide the app shell (drawer + footer) on the hub home page
+        _showShell = !string.IsNullOrWhiteSpace(path);
+    }
+
+    private async Task RefreshPage()
+    {
+        await JSRuntime.InvokeVoidAsync("reloadPage");
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+    #endregion
+}

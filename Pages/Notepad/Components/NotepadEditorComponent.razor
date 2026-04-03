@@ -1,0 +1,31 @@
+<div class="notepad-editor-wrapper">
+    @if (Tab is not null)
+    {
+        <MudTextField T="string"
+                      Value="@Tab.Content"
+                      ValueChanged="@((v) => OnContentChanged.InvokeAsync(v))"
+                      Variant="Variant.Text"
+                      Lines="20"
+                      FullWidth="true"
+                      Placeholder="Type something..."
+                      AutoGrow="true"
+                      Class="notepad-editor" />
+    }
+    else
+    {
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="min-height: 300px;">
+            <MudText Color="Color.Secondary">No tabs open. Create one to start writing.</MudText>
+        </MudStack>
+    }
+</div>
+
+<style>
+    .notepad-editor-wrapper {
+        padding: 8px;
+    }
+</style>
+
+@code {
+    [Parameter] public NotepadTabModel? Tab { get; set; }
+    [Parameter] public EventCallback<string> OnContentChanged { get; set; }
+}

@@ -1,0 +1,86 @@
+@page "/sts"
+@inject SpotifyService SpotifyService
+
+<PageTitle>Spotify That Sentence</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="mb-6">
+        <MudText Typo="Typo.h5" Style="color: #1db954;"><b>Spotify That Sentence</b></MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+            Type a sentence and find Spotify tracks matching each word or phrase.
+        </MudText>
+    </MudStack>
+
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudTextField @bind-Value="_sentence"
+                      Placeholder="e.g. we are the champions"
+                      Variant="Variant.Outlined"
+                      FullWidth="true"
+                      Disabled="@_isSearching"
+                      @onkeydown="HandleKeyDown" />
+        <MudButton Variant="Variant.Filled"
+                   Style="background-color: #1db954; color: white; white-space: nowrap;"
+                   OnClick="Search"
+                   Disabled="@(_isSearching || string.IsNullOrWhiteSpace(_sentence))">
+            @(_isSearching ? "Searching..." : "Find Tracks")
+        </MudButton>
+    </MudStack>
+
+    @if (_isSearching)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Success" Class="mb-4" />
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+    }
+
+    @if (_results.Count > 0)
+    {
+        <StsResultsComponent Results="_results" />
+    }
+</MudContainer>
+
+@code {
+    #region Fields
+    private string _sentence = "";
+    private List<SpotifyMatchResultModel> _results = new();
+    private bool _isSearching = false;
+    private string _errorMessage = "";
+    #endregion
+
+    #region Methods
+    private async Task Search()
+    {
+        if (string.IsNullOrWhiteSpace(_sentence)) return;
+
+        _isSearching = true;
+        _errorMessage = "";
+        _results = new();
+        StateHasChanged();
+
+        try
+        {
+            _results = await SpotifyService.MatchSentenceAsync(_sentence);
+
+            if (_results.Count == 0)
+                _errorMessage = "No results found. The Spotify proxy may not be configured yet.";
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            _isSearching = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await Search();
+    }
+    #endregion
+}

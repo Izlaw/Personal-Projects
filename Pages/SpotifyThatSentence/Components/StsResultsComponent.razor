@@ -1,0 +1,21 @@
+<div class="sts-results-scroll">
+    @foreach (var result in Results)
+    {
+        <StsTrackCardComponent Result="result" />
+    }
+</div>
+
+<style>
+    .sts-results-scroll {
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 8px 4px 16px;
+        align-items: flex-start;
+    }
+</style>
+
+@code {
+    [Parameter] public List<SpotifyMatchResultModel> Results { get; set; } = new();
+}

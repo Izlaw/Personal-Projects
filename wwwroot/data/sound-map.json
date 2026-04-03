@@ -1,0 +1,8 @@
+{
+  "sounds": {
+    "/Lotus/Powersuits/Saryn/Abilities/PoisonAbility": "https://new.kasumata.ee/api/download?id=6eda338447135ed7133f1e18ea1df755&format=ogg",
+    "/Lotus/Powersuits/Saryn/Abilities/ShedAbility": "https://new.kasumata.ee/api/download?id=a6309f59f022f547d5954bb1d3dee6be&format=ogg",
+    "/Lotus/Powersuits/Saryn/Abilities/WeaponPoisonAbility": "https://new.kasumata.ee/api/download?id=c6744e38f44cff51540d0fdbb3e0aabd&format=ogg",
+    "/Lotus/Powersuits/Saryn/Abilities/ExplosiveDissolveAbility": "https://new.kasumata.ee/api/download?id=160e4597017abae3b842015c9718bd86&format=ogg"
+  }
+}

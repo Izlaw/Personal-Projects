@@ -1,0 +1,41 @@
+<div class="dtr-table-wrapper">
+    <MudTable Items="_entries" Dense="true" Hover="true" Striped="true"
+              FixedHeader="true" Height="500px" Class="dtr-table">
+        <HeaderContent>
+            <MudTh>Date</MudTh>
+            <MudTh>Morning Login</MudTh>
+            <MudTh>Morning Logout</MudTh>
+            <MudTh>Afternoon Login</MudTh>
+            <MudTh>Afternoon Logout</MudTh>
+            <MudTh>Hours</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <DtrRowComponent Entry="context"
+                             OnChanged="@((e) => OnEntryChanged.InvokeAsync(e))"
+                             OnDelete="@((key) => OnDeleteEntry.InvokeAsync(key))" />
+        </RowTemplate>
+    </MudTable>
+</div>
+
+<MudButton StartIcon="@Icons.Material.Filled.Add"
+           Variant="Variant.Text"
+           Color="Color.Primary"
+           FullWidth="true"
+           Class="mt-2"
+           OnClick="@(() => OnAddEntry.InvokeAsync())">
+    Add New Record
+</MudButton>
+
+@code {
+    #region Fields
+    private List<DtrEntryModel> _entries => Entries;
+    #endregion
+
+    #region Parameters
+    [Parameter] public List<DtrEntryModel> Entries { get; set; } = new();
+    [Parameter] public EventCallback<DtrEntryModel> OnEntryChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDeleteEntry { get; set; }
+    [Parameter] public EventCallback OnAddEntry { get; set; }
+    #endregion
+}

@@ -1,0 +1,174 @@
+@page "/valentines"
+
+<PageTitle>Valentine's Card</PageTitle>
+
+<!-- Animated particles (rendered on top of everything) -->
+@foreach (var heart in _hearts)
+{
+    <span class="heart-particle"
+          style="left: @(heart.X.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%;
+                 bottom: 0;
+                 animation-duration: @(heart.Duration.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))s;
+                 animation-delay: @(heart.Delay.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))s;">
+        ❤️
+    </span>
+}
+
+@foreach (var emoji in _fallingEmojis)
+{
+    <span class="sad-emoji-particle"
+          style="left: @(emoji.X.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%;
+                 top: -5vh;
+                 animation-duration: @(emoji.Duration.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))s;
+                 animation-delay: @(emoji.Delay.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))s;">
+        😢
+    </span>
+}
+
+<div class="valentines-wrapper">
+    <MudPaper Elevation="6" Class="valentines-card pa-8">
+
+        @if (!_saidYes)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                <MudText Typo="Typo.h4" Align="Align.Center" Style="font-family: 'Georgia', serif; color: #c2185b;">
+                    Will you be my Valentine?
+                </MudText>
+
+                @if (_noClickCount > 0)
+                {
+                    <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">
+                        @_escalatingTexts[Math.Min(_noClickCount, _escalatingTexts.Length - 1)]
+                    </MudText>
+                }
+
+                <MudStack Row="true" Justify="Justify.Center" Spacing="3" Class="mt-2">
+                    <MudButton Variant="Variant.Filled"
+                               Style="background-color: #e91e63; color: white; font-size: 1.1rem; padding: 10px 32px;"
+                               OnClick="SayYes">
+                        Yes! ❤️
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Default"
+                               Style="@($"font-size: {_noButtonSize.ToString(System.Globalization.CultureInfo.InvariantCulture)}rem;")"
+                               OnClick="SayNo">
+                        @_noButtonText
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudText Typo="Typo.h4" Align="Align.Center" Style="font-family: 'Georgia', serif; color: #c2185b;">
+                    FEBRUARY 14'S THE DATE, THERE'S NO ESCAPE! 🎉
+                </MudText>
+                @if (_noClickCount > 0)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                        (You said "No" @_noClickCount time@(_noClickCount == 1 ? "" : "s") before finally coming around 😄)
+                    </MudText>
+                }
+                <img src="images/cat.gif" alt="Happy cat" style="max-width: 280px; border-radius: 12px;" />
+            </MudStack>
+        }
+
+    </MudPaper>
+</div>
+
+<style>
+    .valentines-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+        padding: 24px;
+    }
+    .valentines-card {
+        max-width: 500px;
+        width: 100%;
+        border-radius: 24px !important;
+        background: white !important;
+    }
+</style>
+
+@code {
+    #region Fields
+    private int _noClickCount = 0;
+    private bool _saidYes = false;
+
+    private record HeartParticle(double X, double Duration, double Delay);
+    private record EmojiParticle(double X, double Duration, double Delay);
+
+    private List<HeartParticle> _hearts = new();
+    private List<EmojiParticle> _fallingEmojis = new();
+
+    private static readonly string[] _escalatingTexts =
+    [
+        "Are you sure?",
+        "Really sure?",
+        "Think again! 🥺",
+        "Last chance!",
+        "Pretty please? 🙏",
+        "Are you heartless?",
+        "I'm begging you 😭",
+        "You monster!",
+        "I'm crying now... 😭",
+        "Fine... but are you REALLY sure?"
+    ];
+
+    private string _noButtonText = "No";
+    private double _noButtonSize = 1.0;
+    #endregion
+
+    #region Methods
+    private void SayYes()
+    {
+        _saidYes = true;
+        SpawnHearts(20);
+        StateHasChanged();
+    }
+
+    private void SayNo()
+    {
+        _noClickCount++;
+        _noButtonText = _noClickCount >= _escalatingTexts.Length - 1
+            ? "Still no 😤"
+            : "No";
+
+        // Shrink the "No" button each time
+        _noButtonSize = Math.Max(0.6, 1.0 - _noClickCount * 0.05);
+
+        // Spawn falling sad emojis after 3+ clicks
+        if (_noClickCount >= 3)
+            SpawnEmojis(3);
+
+        StateHasChanged();
+    }
+
+    private void SpawnHearts(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            _hearts.Add(new HeartParticle(
+                X: Random.Shared.NextDouble() * 100,
+                Duration: 3.5 + Random.Shared.NextDouble() * 2,
+                Delay: Random.Shared.NextDouble() * 1.5
+            ));
+        }
+    }
+
+    private void SpawnEmojis(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            _fallingEmojis.Add(new EmojiParticle(
+                X: Random.Shared.NextDouble() * 90,
+                Duration: 2.5 + Random.Shared.NextDouble() * 1.5,
+                Delay: Random.Shared.NextDouble() * 0.5
+            ));
+        }
+    }
+    #endregion
+}

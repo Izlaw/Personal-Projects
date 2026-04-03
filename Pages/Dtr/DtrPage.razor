@@ -1,0 +1,108 @@
+@page "/dtr"
+@implements IDisposable
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Daily Time Record</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
+    <MudText Typo="Typo.h5" Class="mb-4"><b>Daily Time Record</b></MudText>
+
+    @if (_isLoading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+    }
+
+    <DtrSummaryComponent Summary="_summary" />
+
+    <MudPaper Elevation="2" Class="mt-4">
+        <DtrTableComponent Entries="_entries"
+                           OnEntryChanged="HandleEntryChanged"
+                           OnDeleteEntry="HandleDeleteEntry"
+                           OnAddEntry="HandleAddEntry" />
+    </MudPaper>
+</MudContainer>
+
+@code {
+    #region Fields
+    private List<DtrEntryModel> _entries = new();
+    private DtrSummaryModel _summary = new();
+    private bool _isLoading = true;
+    private DotNetObjectReference<DtrPage>? _dotNetRef;
+    #endregion
+
+    #region Lifecycle
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("dbFunctions.dtr.init", _dotNetRef);
+        }
+    }
+
+    public void Dispose()
+    {
+        JSRuntime.InvokeVoidAsync("dbFunctions.dtr.detach");
+        _dotNetRef?.Dispose();
+    }
+    #endregion
+
+    #region Methods
+    [JSInvokable]
+    public void UpdateEntries(string entriesJson)
+    {
+        var incoming = System.Text.Json.JsonSerializer.Deserialize<List<DtrEntryModel>>(entriesJson)
+            ?? new List<DtrEntryModel>();
+        _entries = incoming.OrderBy(e => e.Date).ToList();
+        _isLoading = false;
+        RecalculateSummary();
+        StateHasChanged();
+    }
+
+    private void RecalculateSummary()
+    {
+        double totalHours = _entries.Sum(e => e.Hours);
+        int totalDays = _entries.Count(e => !string.IsNullOrWhiteSpace(e.Date) && e.Hours > 0);
+        double avg = totalDays > 0 ? totalHours / totalDays : 0;
+        double remaining = Math.Max(0, AppConfig.DtrTargetHours - totalHours);
+        double remainingDays = avg > 0 ? remaining / avg : 0;
+
+        _summary = new DtrSummaryModel
+        {
+            TotalHours = Math.Round(totalHours, 2),
+            TotalDays = totalDays,
+            AverageHoursPerDay = Math.Round(avg, 2),
+            RemainingHours = Math.Round(remaining, 2),
+            RemainingDays = Math.Round(remainingDays, 2),
+            ProgressPercent = Math.Min(100, Math.Round(totalHours / AppConfig.DtrTargetHours * 100, 1))
+        };
+    }
+
+    private async Task HandleEntryChanged(DtrEntryModel entry)
+    {
+        if (entry.Key is null) return;
+        var json = System.Text.Json.JsonSerializer.Serialize(entry);
+        await JSRuntime.InvokeVoidAsync("dbFunctions.dtr.saveEntry", entry.Key, json);
+    }
+
+    private async Task HandleDeleteEntry(string key)
+    {
+        await JSRuntime.InvokeVoidAsync("dbFunctions.dtr.deleteEntry", key);
+    }
+
+    private async Task HandleAddEntry()
+    {
+        var newEntry = new DtrEntryModel
+        {
+            Date = DateTime.Now.ToString("yyyy-MM-dd"),
+            MorningLogin = "",
+            MorningLogout = "",
+            AfternoonLogin = "",
+            AfternoonLogout = "",
+            Hours = 0
+        };
+        var json = System.Text.Json.JsonSerializer.Serialize(newEntry);
+        await JSRuntime.InvokeVoidAsync("dbFunctions.dtr.pushEntry", json);
+    }
+    #endregion
+}

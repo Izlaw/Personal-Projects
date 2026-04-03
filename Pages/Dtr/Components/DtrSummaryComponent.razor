@@ -1,0 +1,36 @@
+<MudGrid Spacing="3">
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudText Typo="Typo.overline" Color="Color.Secondary">SUMMARY</MudText>
+            <MudText Typo="Typo.body2" Class="mt-1">Total Hours: <strong>@Summary.TotalHours.ToString("F2")</strong></MudText>
+            <MudText Typo="Typo.body2">Total Days: <strong>@Summary.TotalDays</strong></MudText>
+            <MudText Typo="Typo.body2">Avg Hours/Day: <strong>@Summary.AverageHoursPerDay.ToString("F2")</strong></MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudText Typo="Typo.overline" Color="Color.Secondary">REMAINING</MudText>
+            <MudText Typo="Typo.body2" Class="mt-1">Hours: <strong>@Summary.RemainingHours.ToString("F2")</strong></MudText>
+            <MudText Typo="Typo.body2">Days (at current pace): <strong>@Summary.RemainingDays.ToString("F2")</strong></MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudText Typo="Typo.overline" Color="Color.Secondary">COMPLETION</MudText>
+            <MudProgressLinear Value="@Summary.ProgressPercent"
+                               Color="Color.Success"
+                               Rounded="true"
+                               Size="Size.Large"
+                               Class="mt-2" />
+            <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-1">
+                @Summary.ProgressPercent.ToString("F1")% complete
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public DtrSummaryModel Summary { get; set; } = new();
+}

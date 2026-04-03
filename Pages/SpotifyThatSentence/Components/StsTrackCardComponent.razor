@@ -1,0 +1,47 @@
+<MudCard Class="sts-track-card" Elevation="2">
+    @if (Result.IsMatched && Result.Track is { } track)
+    {
+        @if (!string.IsNullOrEmpty(track.AlbumArtUrl))
+        {
+            <MudCardMedia Image="@track.AlbumArtUrl" Height="140" />
+        }
+        <MudCardContent Class="pa-2">
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                "<strong>@Result.Word</strong>"
+            </MudText>
+            <MudText Typo="Typo.body2"><strong>@track.Name</strong></MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                @string.Join(", ", track.Artists)
+            </MudText>
+        </MudCardContent>
+        <MudCardActions Class="pa-2 pt-0">
+            <MudButton Size="Size.Small"
+                       Variant="Variant.Outlined"
+                       Style="border-color: #1db954; color: #1db954;"
+                       Href="@track.SpotifyUrl"
+                       Target="_blank">
+                Open in Spotify
+            </MudButton>
+        </MudCardActions>
+    }
+    else
+    {
+        <MudCardContent Class="pa-3 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.MusicOff" Color="Color.Default" Size="Size.Large" />
+            <MudText Typo="Typo.body2" Class="mt-1">"@Result.Word"</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">No match</MudText>
+        </MudCardContent>
+    }
+</MudCard>
+
+<style>
+    .sts-track-card {
+        min-width: 160px;
+        max-width: 180px;
+        flex-shrink: 0;
+    }
+</style>
+
+@code {
+    [Parameter] public SpotifyMatchResultModel Result { get; set; } = new();
+}
