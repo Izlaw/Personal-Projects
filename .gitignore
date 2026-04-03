@@ -1,0 +1,5 @@
+bin/
+obj/
+release_build/
+*.user
+.vs/
