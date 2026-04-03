@@ -12,5 +12,6 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddMudServices();
 builder.Services.AddScoped<DebounceService>();
 builder.Services.AddScoped<SpotifyService>();
+builder.Services.AddScoped<AppThemeService>();
 
 await builder.Build().RunAsync();

@@ -1,6 +1,6 @@
-<div class="dtr-table-wrapper">
-    <MudTable Items="_entries" Dense="true" Hover="true" Striped="true"
-              FixedHeader="true" Height="500px" Class="dtr-table">
+<div class="dtrt-wrap">
+    <MudTable Items="Entries" Dense="true" Hover="true" Striped="true"
+              FixedHeader="true" Height="500px" Elevation="0">
         <HeaderContent>
             <MudTh>Date</MudTh>
             <MudTh>Morning Login</MudTh>
@@ -22,16 +22,19 @@
            Variant="Variant.Text"
            Color="Color.Primary"
            FullWidth="true"
-           Class="mt-2"
+           Class="mt-0"
+           Style="border-top: 1px solid #e5e7eb; border-radius: 0;"
            OnClick="@(() => OnAddEntry.InvokeAsync())">
     Add New Record
 </MudButton>
 
-@code {
-    #region Fields
-    private List<DtrEntryModel> _entries => Entries;
-    #endregion
+<style>
+    .dtrt-wrap {
+        overflow-x: auto;
+    }
+</style>
 
+@code {
     #region Parameters
     [Parameter] public List<DtrEntryModel> Entries { get; set; } = new();
     [Parameter] public EventCallback<DtrEntryModel> OnEntryChanged { get; set; }

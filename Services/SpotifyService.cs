@@ -1,5 +1,9 @@
+using System.Globalization;
+using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using PersonalProjects.Models;
 
 namespace PersonalProjects.Services;
@@ -8,17 +12,17 @@ public class SpotifyService
 {
     private readonly HttpClient _http;
     private SpotifyTokenModel? _cachedToken;
+    private readonly Dictionary<string, List<SpotifyTrackModel>> _searchCache = new();
+    private DateTime _lastRequestTime = DateTime.MinValue;
+    private const int MinDelayMs = 100;
 
     public SpotifyService(HttpClient http)
     {
         _http = http;
     }
 
-    #region Methods
+    #region Public Methods
 
-    /// <summary>
-    /// Returns a valid Spotify access token, refreshing if expired.
-    /// </summary>
     public async Task<string?> GetTokenAsync()
     {
         if (_cachedToken is not null && !_cachedToken.IsExpired)
@@ -47,50 +51,8 @@ public class SpotifyService
     }
 
     /// <summary>
-    /// Search Spotify for a track matching the given query.
-    /// Returns null if no match is found or on error.
-    /// </summary>
-    public async Task<SpotifyTrackModel?> SearchTrackAsync(string query, string token)
-    {
-        try
-        {
-            var encoded = Uri.EscapeDataString(query);
-            var url = $"https://api.spotify.com/v1/search?q={encoded}&type=track&limit=5";
-
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new("Bearer", token);
-
-            var response = await _http.SendAsync(request);
-            if (!response.IsSuccessStatusCode) return null;
-
-            var result = await response.Content.ReadFromJsonAsync<SpotifySearchResponse>();
-            if (result?.Tracks?.Items is null or { Count: 0 }) return null;
-
-            // Find a track whose name closely matches the query (case-insensitive, trimmed)
-            var normalizedQuery = query.Trim().ToLowerInvariant();
-            var match = result.Tracks.Items
-                .FirstOrDefault(t => t.Name.Trim().ToLowerInvariant() == normalizedQuery);
-
-            if (match is null) return null;
-
-            return new SpotifyTrackModel
-            {
-                Id = match.Id,
-                Name = match.Name,
-                AlbumArtUrl = match.Album?.Images?.FirstOrDefault()?.Url,
-                SpotifyUrl = match.ExternalUrls?.Spotify ?? "",
-                Artists = match.Artists?.Select(a => a.Name).ToList() ?? new()
-            };
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Greedy left-to-right sentence matching. Tries the longest phrase first,
-    /// then falls back to shorter subsets. Returns one result per matched word/phrase.
+    /// Greedy left-to-right sentence matching using parallel batch searches.
+    /// Tries the longest phrase first, batching candidates for parallel execution.
     /// </summary>
     public async Task<List<SpotifyMatchResultModel>> MatchSentenceAsync(string sentence)
     {
@@ -104,32 +66,46 @@ public class SpotifyService
         int i = 0;
         while (i < words.Length)
         {
-            SpotifyMatchResultModel? matchedResult = null;
+            // Build candidates: longest phrase to shortest
+            var candidates = Enumerable.Range(1, words.Length - i)
+                .Select(len => new { Phrase = string.Join(" ", words[i..(i + len)]), EndIndex = i + len })
+                .Reverse()
+                .ToList();
 
-            // Try from longest phrase down to single word
-            for (int len = words.Length - i; len >= 1; len--)
+            SpotifyMatchResultModel? found = null;
+
+            // Search in parallel batches of 10
+            for (int b = 0; b < candidates.Count; b += 10)
             {
-                var phrase = string.Join(" ", words[i..(i + len)]);
-                var track = await SearchTrackAsync(phrase, token);
+                var batch = candidates.Skip(b).Take(10).ToList();
+                var usedIds = usedTrackIds.ToArray();
+                var tasks = batch.Select(c => SearchTrackAsync(c.Phrase, token, usedIds));
+                var trackResults = await Task.WhenAll(tasks);
 
-                if (track is not null && usedTrackIds.Add(track.Id))
+                for (int j = 0; j < trackResults.Length; j++)
                 {
-                    matchedResult = new SpotifyMatchResultModel { Word = phrase, Track = track };
-                    i += len;
-                    break;
+                    if (trackResults[j] is not null)
+                    {
+                        found = new SpotifyMatchResultModel
+                        {
+                            Word = batch[j].Phrase,
+                            Track = trackResults[j]
+                        };
+                        usedTrackIds.Add(trackResults[j]!.Id);
+                        i = batch[j].EndIndex;
+                        break;
+                    }
                 }
 
-                // Rate limiting guard
-                await Task.Delay(100);
+                if (found is not null) break;
             }
 
-            if (matchedResult is not null)
+            if (found is not null)
             {
-                results.Add(matchedResult);
+                results.Add(found);
             }
             else
             {
-                // No match found for current word — record it as unmatched and advance
                 results.Add(new SpotifyMatchResultModel { Word = words[i], Track = null });
                 i++;
             }
@@ -137,6 +113,125 @@ public class SpotifyService
 
         return results;
     }
+
+    #endregion
+
+    #region Private Methods
+
+    private async Task<SpotifyTrackModel?> SearchTrackAsync(string query, string token, string[] avoidIds)
+    {
+        var cacheKey = query.ToLowerInvariant();
+
+        if (_searchCache.TryGetValue(cacheKey, out var cached))
+        {
+            var unused = cached.FirstOrDefault(t => !avoidIds.Contains(t.Id));
+            return unused ?? (cached.Count > 0 ? cached[0] : null);
+        }
+
+        await WaitForCooldown();
+
+        var encoded = Uri.EscapeDataString(query);
+        var url = $"https://api.spotify.com/v1/search?q={encoded}&type=track&limit=50";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new("Bearer", token);
+
+        var response = await _http.SendAsync(request);
+
+        // Token expired — refresh and retry once
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            _cachedToken = null;
+            var newToken = await GetTokenAsync();
+            if (newToken is null) return null;
+
+            await WaitForCooldown();
+            using var retryRequest = new HttpRequestMessage(HttpMethod.Get, url);
+            retryRequest.Headers.Authorization = new("Bearer", newToken);
+            response = await _http.SendAsync(retryRequest);
+        }
+
+        // Rate limited — wait and retry
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(5);
+            await Task.Delay(retryAfter);
+            return await SearchTrackAsync(query, token, avoidIds);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _searchCache[cacheKey] = new();
+            return null;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<SpotifySearchResponse>();
+        var items = result?.Tracks?.Items;
+
+        if (items is null or { Count: 0 })
+        {
+            _searchCache[cacheKey] = new();
+            return null;
+        }
+
+        var normalizedQuery = Normalize(query);
+
+        // Tier 1: normalized exact match
+        var matches = items
+            .Where(t => Normalize(t.Name) == normalizedQuery)
+            .Select(ToTrackModel)
+            .ToList();
+
+        // Tier 2: case-insensitive exact match
+        if (matches.Count == 0)
+            matches = items
+                .Where(t => t.Name.Equals(query, StringComparison.OrdinalIgnoreCase))
+                .Select(ToTrackModel)
+                .ToList();
+
+        // Tier 3: trimmed case-insensitive
+        if (matches.Count == 0)
+            matches = items
+                .Where(t => t.Name.Trim().Equals(query.Trim(), StringComparison.OrdinalIgnoreCase))
+                .Select(ToTrackModel)
+                .ToList();
+
+        _searchCache[cacheKey] = matches;
+
+        var best = matches.FirstOrDefault(t => !avoidIds.Contains(t.Id));
+        return best ?? (matches.Count > 0 ? matches[0] : null);
+    }
+
+    private async Task WaitForCooldown()
+    {
+        var elapsed = DateTime.UtcNow - _lastRequestTime;
+        if (elapsed.TotalMilliseconds < MinDelayMs)
+            await Task.Delay(MinDelayMs - (int)elapsed.TotalMilliseconds);
+        _lastRequestTime = DateTime.UtcNow;
+    }
+
+    private static string Normalize(string text)
+    {
+        var normalized = text.Normalize(NormalizationForm.FormD);
+        var stripped = new string(normalized
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .ToArray());
+
+        return Regex.Replace(stripped, @"[''`""'\-]", "")
+            .Replace("  ", " ")
+            .Trim()
+            .ToLowerInvariant();
+    }
+
+    private static SpotifyTrackModel ToTrackModel(SpotifyTrackItem t) => new()
+    {
+        Id = t.Id,
+        Name = t.Name,
+        AlbumArtUrl = t.Album?.Images?.ElementAtOrDefault(1)?.Url
+                   ?? t.Album?.Images?.FirstOrDefault()?.Url,
+        SpotifyUrl = t.ExternalUrls?.Spotify ?? "",
+        Artists = t.Artists?.Select(a => a.Name).ToList() ?? new()
+    };
 
     #endregion
 

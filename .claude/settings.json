@@ -4,7 +4,7 @@
       "c:\\Users\\Thirdy\\Desktop\\myRepo\\PersonalProjects"
     ],
     "allow": [
-      "Bash(find \"c:\\\\Users\\\\Thirdy\\\\Desktop\\\\myRepo\\\\PersonalProjects\" -name \"wrangler.toml\" -exec grep -l \"pages\" {} \\\\;)"
+      "Bash(npx wrangler@3 deployments list)"
     ]
   }
 }

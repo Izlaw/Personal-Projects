@@ -4,23 +4,198 @@
 
 <PageTitle>Daily Time Record</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
-    <MudText Typo="Typo.h5" Class="mb-4"><b>Daily Time Record</b></MudText>
+<div class="dtr-root">
+    <header class="dtr-header">
+        <div class="dtr-header-inner">
+            <h1 class="dtr-title">Daily Time Record</h1>
+            <span class="dtr-progress-label">@_summary.ProgressPercent.ToString("F1")% of 600 hrs</span>
+        </div>
+    </header>
 
-    @if (_isLoading)
-    {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+    <main class="dtr-main">
+        <div class="dtr-main-inner">
+            @if (_isLoading)
+            {
+                <div class="dtr-loading-bar"></div>
+            }
+
+            <div class="dtr-summary-row">
+                <div class="dtr-stat-card">
+                    <span class="dtr-stat-label">TOTAL HOURS</span>
+                    <span class="dtr-stat-value">@_summary.TotalHours.ToString("F2")</span>
+                </div>
+                <div class="dtr-stat-card">
+                    <span class="dtr-stat-label">TOTAL DAYS</span>
+                    <span class="dtr-stat-value">@_summary.TotalDays</span>
+                </div>
+                <div class="dtr-stat-card">
+                    <span class="dtr-stat-label">AVG HRS / DAY</span>
+                    <span class="dtr-stat-value">@_summary.AverageHoursPerDay.ToString("F2")</span>
+                </div>
+                <div class="dtr-stat-card">
+                    <span class="dtr-stat-label">REMAINING HRS</span>
+                    <span class="dtr-stat-value">@_summary.RemainingHours.ToString("F2")</span>
+                </div>
+                <div class="dtr-stat-card">
+                    <span class="dtr-stat-label">REMAINING DAYS</span>
+                    <span class="dtr-stat-value">@_summary.RemainingDays.ToString("F2")</span>
+                </div>
+            </div>
+
+            <div class="dtr-progress-wrap">
+                <div class="dtr-progress-track">
+                    <div class="dtr-progress-fill" style="width: @(_summary.ProgressPercent.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                </div>
+                <span class="dtr-progress-pct">@_summary.ProgressPercent.ToString("F1")%</span>
+            </div>
+
+            <div class="dtr-paper">
+                <DTRTableComponent Entries="_entries"
+                                   OnEntryChanged="HandleEntryChanged"
+                                   OnDeleteEntry="HandleDeleteEntry"
+                                   OnAddEntry="HandleAddEntry" />
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+    .dtr-root {
+        min-height: var(--page-h);
+        background: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        font-family: 'Segoe UI', system-ui, sans-serif;
     }
 
-    <DTRSummaryComponent Summary="_summary" />
+    .dtr-header {
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 
-    <MudPaper Elevation="2" Class="mt-4">
-        <DTRTableComponent Entries="_entries"
-                           OnEntryChanged="HandleEntryChanged"
-                           OnDeleteEntry="HandleDeleteEntry"
-                           OnAddEntry="HandleAddEntry" />
-    </MudPaper>
-</MudContainer>
+    .dtr-header-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .dtr-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+    }
+
+    .dtr-progress-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .dtr-main {
+        flex: 1;
+    }
+
+    .dtr-main-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px 24px;
+    }
+
+    .dtr-loading-bar {
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6 0%, #93c5fd 50%, #3b82f6 100%);
+        background-size: 200%;
+        animation: dtr-loading 1.2s linear infinite;
+        border-radius: 3px;
+        margin-bottom: 12px;
+    }
+
+    @@keyframes dtr-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    .dtr-summary-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+    .dtr-stat-card {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 12px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        min-width: 140px;
+    }
+
+    .dtr-stat-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+        text-transform: uppercase;
+    }
+
+    .dtr-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .dtr-progress-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .dtr-progress-track {
+        flex: 1;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .dtr-progress-fill {
+        height: 100%;
+        background: #22c55e;
+        border-radius: 4px;
+        transition: width 0.4s ease;
+    }
+
+    .dtr-progress-pct {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #22c55e;
+        white-space: nowrap;
+    }
+
+    .dtr-paper {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        overflow: hidden;
+        color: #374151 !important;
+    }
+
+    .dtr-paper * {
+        color: #374151 !important;
+    }
+
+    .dtr-paper .mud-icon-button .mud-icon-root {
+        color: #ef4444 !important;
+    }
+</style>
 
 @code {
     #region Fields

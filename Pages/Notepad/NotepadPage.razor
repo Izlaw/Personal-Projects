@@ -5,48 +5,235 @@
 
 <PageTitle>Online Notepad</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
-        <MudText Typo="Typo.h5"><b>Online Notepad</b></MudText>
-        <MudText Typo="Typo.caption" Color="Color.Secondary">
-            @_wordCount words &nbsp;|&nbsp; @_charCount characters &nbsp;|&nbsp;
-            <span style="color: @(_saveStatus == "Saved" ? "green" : "gray");">@_saveStatus</span>
-        </MudText>
-    </MudStack>
+<div class="np-shell">
 
     @if (_isLoading)
     {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-3" />
+        <div class="np-loading-bar"></div>
     }
 
-    <NotepadTabBarComponent Tabs="_tabs"
-                            ActiveTab="_activeTab"
-                            OnTabSelected="SelectTab"
-                            OnNewTab="CreateNewTabAsync"
-                            OnCloseTab="CloseTabAsync"
-                            OnReorderTab="ReorderTab" />
+    <!-- Sidebar -->
+    <aside class="np-sidebar">
+        <div class="np-sidebar-header">
+            <MudText Typo="Typo.overline" Class="np-sidebar-label">Notes</MudText>
+            <MudTooltip Text="New Tab (Ctrl+N)" Placement="Placement.Right">
+                <MudIconButton Icon="@Icons.Material.Filled.Add"
+                               Size="Size.Small"
+                               Style="color:#3b82f6;"
+                               OnClick="CreateNewTabAsync" />
+            </MudTooltip>
+        </div>
 
-    <MudPaper Elevation="2" Class="mt-0">
-        <NotepadEditorComponent Tab="_activeTab"
-                                OnContentChanged="HandleContentChanged" />
-    </MudPaper>
+        <div class="np-tab-list-wrap">
+            <NotepadTabBarComponent Tabs="_tabs"
+                                    ActiveTab="_activeTab"
+                                    OnTabSelected="SelectTab"
+                                    OnNewTab="CreateNewTabAsync"
+                                    OnCloseTab="CloseTabAsync"
+                                    OnReorderTab="ReorderTab" />
+        </div>
+    </aside>
 
-    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2 px-1">
-        <MudText Typo="Typo.caption" Color="Color.Secondary">
-            Ctrl+S save &nbsp;|&nbsp; Ctrl+N new tab &nbsp;|&nbsp; Ctrl+W close tab
-        </MudText>
-        <MudStack Row="true" Spacing="1">
-            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
-                       OnClick="ClearContent" Disabled="@(_activeTab is null)">
-                Clear
-            </MudButton>
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="SaveCurrentTabAsync" Disabled="@(_activeTab is null)">
-                Save
-            </MudButton>
-        </MudStack>
-    </MudStack>
-</MudContainer>
+    <!-- Main content -->
+    <div class="np-content">
+
+        <!-- Toolbar -->
+        <div class="np-toolbar">
+            <div class="np-toolbar-left">
+                <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Style="color:#9ca3af;" />
+                <span class="np-active-title">@(_activeTab?.Title ?? "No tab selected")</span>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
+                         Class="@($"np-save-chip np-save-{GetSaveStatusKey()}")">
+                    @_saveStatus
+                </MudChip>
+            </div>
+            <div class="np-toolbar-right">
+                <MudTooltip Text="Clear content">
+                    <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
+                                   Size="Size.Small"
+                                   Style="color:#9ca3af;"
+                                   Disabled="@(_activeTab is null)"
+                                   OnClick="ClearContent" />
+                </MudTooltip>
+                <MudTooltip Text="Save (Ctrl+S)">
+                    <MudIconButton Icon="@Icons.Material.Filled.Save"
+                                   Size="Size.Small"
+                                   Style="color:#3b82f6;"
+                                   Disabled="@(_activeTab is null)"
+                                   OnClick="SaveCurrentTabAsync" />
+                </MudTooltip>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="np-editor-wrap">
+            <NotepadEditorComponent Tab="_activeTab" OnContentChanged="HandleContentChanged" />
+        </div>
+
+        <!-- Status bar -->
+        <div class="np-statusbar">
+            <span>@_wordCount word@(_wordCount != 1 ? "s" : "")</span>
+            <span class="np-status-divider">·</span>
+            <span>@_charCount char@(_charCount != 1 ? "s" : "")</span>
+            <span class="np-status-spacer"></span>
+            <span class="np-status-hint"><kbd>Ctrl+S</kbd> save</span>
+            <span class="np-status-divider">·</span>
+            <span class="np-status-hint"><kbd>Ctrl+N</kbd> new</span>
+            <span class="np-status-divider">·</span>
+            <span class="np-status-hint"><kbd>Ctrl+W</kbd> close</span>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .np-shell {
+        height: var(--page-h);
+        display: flex;
+        flex-direction: row;
+        background: #f9fafb;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Loading bar */
+    .np-loading-bar {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6 0%, #93c5fd 50%, #3b82f6 100%);
+        background-size: 200%;
+        animation: np-load 1.2s linear infinite;
+        z-index: 10;
+    }
+    @@keyframes np-load {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* Sidebar */
+    .np-sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        background: #ffffff;
+        border-right: 1px solid #e5e7eb;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .np-sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px 10px 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .np-sidebar-label {
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.1em;
+        color: #9ca3af !important;
+    }
+
+    .np-tab-list-wrap {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #e5e7eb transparent;
+    }
+
+    /* Main content */
+    .np-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    /* Toolbar */
+    .np-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 12px;
+        background: #ffffff;
+        min-height: 44px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .np-toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .np-active-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .np-save-chip {
+        font-size: 0.7rem !important;
+        height: 20px !important;
+    }
+
+    .np-save-saved  { color: #22c55e !important; }
+    .np-save-saving { color: #3b82f6 !important; }
+    .np-save-unsaved { color: #f97316 !important; }
+
+    .np-toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+    }
+
+    /* Editor */
+    .np-editor-wrap {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Status bar */
+    .np-statusbar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 16px;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        font-size: 0.7rem;
+        color: #9ca3af;
+        flex-shrink: 0;
+    }
+
+    .np-status-divider { color: #d1d5db; }
+
+    .np-status-spacer { flex: 1; }
+
+    .np-status-hint { color: #9ca3af; }
+
+    .np-statusbar kbd {
+        padding: 1px 4px;
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-radius: 3px;
+        font-size: 0.65rem;
+        color: #6b7280;
+    }
+</style>
 
 @code {
     #region Fields
@@ -88,7 +275,6 @@
 
         if (_activeTab is not null)
         {
-            // Re-sync active tab content from Supabase without losing caret position
             var updated = _tabs.FirstOrDefault(t => t.Key == _activeTab.Key);
             if (updated is not null) _activeTab = updated;
         }
@@ -108,7 +294,6 @@
         if (tab is null) return;
         _tabs.Remove(tab);
         _tabs.Insert(Math.Min(newIndex, _tabs.Count), tab);
-        // Persist new order to Supabase
         for (int i = 0; i < _tabs.Count; i++)
         {
             _tabs[i].Order = i;
@@ -118,14 +303,9 @@
         StateHasChanged();
     }
 
-    [JSInvokable]
-    public Task SaveCurrentTab() => SaveCurrentTabAsync();
-
-    [JSInvokable]
-    public Task CreateNewTab() => CreateNewTabAsync();
-
-    [JSInvokable]
-    public Task CloseCurrentTab() => CloseTabAsync(_activeTab);
+    [JSInvokable] public Task SaveCurrentTab() => SaveCurrentTabAsync();
+    [JSInvokable] public Task CreateNewTab() => CreateNewTabAsync();
+    [JSInvokable] public Task CloseCurrentTab() => CloseTabAsync(_activeTab);
     #endregion
 
     #region Methods — UI handlers
@@ -145,15 +325,13 @@
             CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
         var json = System.Text.Json.JsonSerializer.Serialize(newTab);
-        var key = await JSRuntime.InvokeAsync<string>("dbFunctions.notepad.pushTab", json);
-        // Supabase realtime will update _tabs automatically
+        await JSRuntime.InvokeAsync<string>("dbFunctions.notepad.pushTab", json);
     }
 
     private async Task CloseTabAsync(NotepadTabModel? tab)
     {
         if (tab?.Key is null) return;
         await JSRuntime.InvokeVoidAsync("dbFunctions.notepad.deleteTab", tab.Key);
-        // Supabase realtime will remove from _tabs
     }
 
     private async Task HandleContentChanged(string content)
@@ -161,11 +339,12 @@
         if (_activeTab is null) return;
         _activeTab.Content = content;
         UpdateCounts();
-        _saveStatus = "Saving...";
+        _saveStatus = "Unsaved changes...";
+        StateHasChanged();
         await Debounce.DebounceAsync(async () =>
         {
             await SaveCurrentTabAsync();
-            _saveStatus = "Saved";
+            _saveStatus = "All changes saved";
             StateHasChanged();
         }, 1000);
     }
@@ -173,9 +352,11 @@
     private async Task SaveCurrentTabAsync()
     {
         if (_activeTab?.Key is null) return;
+        _saveStatus = "Saving...";
+        StateHasChanged();
         var json = System.Text.Json.JsonSerializer.Serialize(_activeTab);
         await JSRuntime.InvokeVoidAsync("dbFunctions.notepad.saveTab", _activeTab.Key, json);
-        _saveStatus = "Saved";
+        _saveStatus = "All changes saved";
     }
 
     private void ClearContent()
@@ -187,18 +368,21 @@
         _ = Debounce.DebounceAsync(SaveCurrentTabAsync, 500);
     }
 
-    private void ReorderTab((string Key, int NewIndex) args)
-    {
-        OnTabReordered(args.Key, args.NewIndex);
-    }
+    private void ReorderTab((string Key, int NewIndex) args) => OnTabReordered(args.Key, args.NewIndex);
 
     private void UpdateCounts()
     {
         var content = _activeTab?.Content ?? "";
         _charCount = content.Length;
-        _wordCount = string.IsNullOrWhiteSpace(content)
-            ? 0
+        _wordCount = string.IsNullOrWhiteSpace(content) ? 0
             : content.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
     }
+
+    private string GetSaveStatusKey() => _saveStatus switch
+    {
+        "All changes saved" => "saved",
+        "Saving..."         => "saving",
+        _                   => "unsaved"
+    };
     #endregion
 }

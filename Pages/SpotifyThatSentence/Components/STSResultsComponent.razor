@@ -1,4 +1,4 @@
-<div class="sts-results-scroll">
+<div class="sts-list">
     @foreach (var result in Results)
     {
         <STSTrackCardComponent Result="result" />
@@ -6,28 +6,13 @@
 </div>
 
 <style>
-    .sts-results-scroll {
+    .sts-list {
         display: flex;
-        flex-direction: row;
-        gap: 16px;
-        overflow-x: auto;
-        padding: 4px 4px 20px;
-        align-items: flex-start;
-        scrollbar-width: thin;
-        scrollbar-color: #535353 transparent;
+        flex-direction: column;
     }
 
-    .sts-results-scroll::-webkit-scrollbar {
-        height: 6px;
-    }
-
-    .sts-results-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .sts-results-scroll::-webkit-scrollbar-thumb {
-        background: #535353;
-        border-radius: 3px;
+    .sts-list > :not(:last-child) {
+        border-bottom: 1px solid #282828;
     }
 </style>
 

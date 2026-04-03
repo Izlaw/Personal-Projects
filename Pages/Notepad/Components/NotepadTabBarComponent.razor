@@ -1,65 +1,99 @@
 @inject IJSRuntime JSRuntime
 
-<div id="notepad-tab-bar" class="notepad-tab-bar">
+<MudList T="NotepadTabModel" Dense="true" Class="np-list" DisablePadding="true">
     @foreach (var tab in Tabs)
     {
         var isActive = tab.Key == ActiveTab?.Key;
-        <div class="notepad-tab-chip @(isActive ? "active" : "")"
-             data-tab-key="@tab.Key"
-             @onclick="@(() => OnTabSelected.InvokeAsync(tab))">
-            <span class="tab-title">@tab.Title</span>
-            <span @onclick:stopPropagation="true">
-                <MudIconButton Icon="@Icons.Material.Filled.Close"
-                               Size="Size.Small"
-                               Class="tab-close-btn"
-                               OnClick="@(() => OnCloseTab.InvokeAsync(tab))" />
-            </span>
-        </div>
+        <MudListItem T="NotepadTabModel"
+                     Class="@($"np-list-item {(isActive ? "np-list-item-active" : "")}")"
+                     data-tab-key="@tab.Key"
+                     OnClick="@(() => OnTabSelected.InvokeAsync(tab))">
+            <div class="np-list-item-content">
+                <MudIcon Icon="@Icons.Material.Outlined.Description"
+                         Size="Size.Small"
+                         Class="np-list-icon" />
+                <span class="np-list-title" title="@tab.Title">@tab.Title</span>
+                <span @onclick:stopPropagation="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                   Size="Size.Small"
+                                   Class="np-list-close"
+                                   OnClick="@(() => OnCloseTab.InvokeAsync(tab))" />
+                </span>
+            </div>
+        </MudListItem>
     }
-    <MudIconButton Icon="@Icons.Material.Filled.Add"
-                   Size="Size.Small"
-                   Color="Color.Primary"
-                   title="New Tab (Ctrl+N)"
-                   OnClick="@(() => OnNewTab.InvokeAsync())" />
-</div>
+</MudList>
 
 <style>
-    .notepad-tab-bar {
+    .np-list {
+        padding: 4px 0 !important;
+    }
+
+    .np-list-item {
+        border-radius: 0 !important;
+        cursor: pointer;
+        transition: background 0.1s;
+        padding: 0 !important;
+    }
+
+    .np-list-item:hover {
+        background: #f3f4f6 !important;
+    }
+
+    .np-list-item-active {
+        background: #eff6ff !important;
+        border-right: 2px solid #3b82f6;
+    }
+
+    .np-list-item-content {
         display: flex;
         align-items: center;
-        gap: 4px;
-        overflow-x: auto;
-        padding: 8px 8px 0;
-        background: #f5f5f5;
-        border: 1px solid #e0e0e0;
-        border-bottom: none;
-        border-radius: 4px 4px 0 0;
-        flex-wrap: nowrap;
+        gap: 6px;
+        padding: 6px 4px 6px 12px;
+        width: 100%;
+        min-width: 0;
     }
-    .notepad-tab-chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 4px 4px 10px;
-        border-radius: 4px 4px 0 0;
-        background: #e0e0e0;
-        cursor: pointer;
+
+    .np-list-icon {
+        flex-shrink: 0;
+        color: #9ca3af !important;
+    }
+
+    .np-list-item-active .np-list-icon {
+        color: #3b82f6 !important;
+    }
+
+    .np-list-title {
+        flex: 1;
+        font-size: 0.8rem;
+        color: #374151;
         white-space: nowrap;
-        font-size: 0.85rem;
-        user-select: none;
-        border: 1px solid #ccc;
-        border-bottom: none;
-        gap: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
     }
-    .notepad-tab-chip.active {
-        background: #ffffff;
-        border-color: #bbb;
+
+    .np-list-item-active .np-list-title {
+        color: #3b82f6;
         font-weight: 600;
     }
-    .notepad-tab-chip:hover {
-        background: #f0f0f0;
+
+    .np-list-close {
+        opacity: 0;
+        flex-shrink: 0;
+        transition: opacity 0.15s;
+        width: 24px !important;
+        height: 24px !important;
+        color: #9ca3af !important;
     }
-    .notepad-tab-chip.active:hover {
-        background: #ffffff;
+
+    .np-list-item:hover .np-list-close,
+    .np-list-item-active .np-list-close {
+        opacity: 1;
+    }
+
+    .np-list-close:hover {
+        color: #ef4444 !important;
     }
 </style>
 

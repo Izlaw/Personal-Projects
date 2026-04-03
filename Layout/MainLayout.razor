@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject AppThemeService AppTheme
 
 <MudThemeProvider Theme="_theme" />
 <MudPopoverProvider />
@@ -11,7 +12,7 @@
 <MudLayout>
     @if (_showShell)
     {
-        <MudAppBar Elevation="1">
+        <MudAppBar Elevation="1" Style="@($"background-color: {AppTheme.AppBarColor}; color: {AppTheme.AppBarTextColor};")"">
             <MudIconButton Icon="@Icons.Material.Filled.Menu"
                            Color="Color.Inherit"
                            Edge="Edge.Start"
@@ -32,13 +33,13 @@
         </MudDrawer>
     }
 
-    <MudMainContent Class="@(_showShell ? "" : "pa-0")">
+    <MudMainContent Class="@(_showShell ? "" : "pa-0")" Style="@(_showShell ? "padding-bottom: 48px; box-sizing: border-box;" : "")">
         @Body
     </MudMainContent>
 
     @if (_showShell)
     {
-        <MudAppBar Class="footerbar" Fixed Elevation="0" Dense Bottom>
+        <MudAppBar Class="footerbar" Fixed Elevation="0" Dense Bottom Style="@($"background-color: {AppTheme.AppBarColor}; color: {AppTheme.AppBarTextColor};")"">
             <MudText Typo="Typo.caption" Class="mr-2">v1.0.0</MudText>
             <MudIconButton Class="footerbar__btn-hardreload"
                            OnClick="RefreshPage"
@@ -76,6 +77,7 @@
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += OnLocationChanged;
+        AppTheme.OnChange += StateHasChanged;
         UpdateShellVisibility();
     }
 
@@ -110,6 +112,7 @@
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        AppTheme.OnChange -= StateHasChanged;
     }
     #endregion
 }

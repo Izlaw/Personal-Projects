@@ -1,138 +1,192 @@
 @page "/"
-@inject NavigationManager NavigationManager
 
 <PageTitle>Personal Projects</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
-    <MudStack AlignItems="AlignItems.Center" Class="mb-8">
-        <MudText Typo="Typo.h3" Align="Align.Center"><b>Personal Projects</b></MudText>
-        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">
-            A collection of personal tools and games — all in one place.
-        </MudText>
-    </MudStack>
+<div class="hub-root">
+    <div class="hub-inner">
+        <div class="hub-heading">
+            <MudText Typo="Typo.h4" Align="Align.Center" Class="hub-title">My Personal Projects</MudText>
+            <MudText Typo="Typo.body2" Align="Align.Center" Class="hub-subtitle">
+                A collection of my personal projects.
+            </MudText>
+        </div>
 
-    <MudGrid Spacing="4" Justify="Justify.Center">
+        <MudGrid Spacing="3" Justify="Justify.Center">
 
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="3" Class="hub-card">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Primary">
-                            <MudIcon Icon="@Icons.Material.Filled.AccessTime" />
-                        </MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Daily Time Record</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Internship hours tracker</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">
-                        Track daily login/logout times with automatic hour calculation.
-                        Monitors progress toward the 600-hour target.
-                    </MudText>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/dtr" FullWidth="true">
-                        Open
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="hub-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Style="background:#38387A;">
+                                <MudIcon Icon="@Icons.Material.Filled.AccessTime" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1" Class="hub-card-title">Daily Time Record</MudText>
+                            <MudText Typo="Typo.caption" Class="hub-card-sub">Internship hours tracker</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Class="hub-card-desc">
+                            Made during my internship so I wouldn't have to fill out paper DTR forms like it's 1995 (I still did because the school required it).
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton FullWidth="true" Variant="Variant.Filled"
+                                   Style="background:#38387A; color:#fff;"
+                                   Href="/dtr">Open</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
 
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="3" Class="hub-card">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Secondary">
-                            <MudIcon Icon="@Icons.Material.Filled.Note" />
-                        </MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Online Notepad</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Cloud-synced multi-tab notes</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">
-                        Multi-tab notepad with Supabase real-time sync. Supports drag-and-drop tab
-                        reordering and Ctrl+S / Ctrl+N / Ctrl+W shortcuts.
-                    </MudText>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/notepad" FullWidth="true">
-                        Open
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="hub-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Style="background:#ffcc00;">
+                                <MudIcon Icon="@Icons.Material.Filled.Note" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1" Class="hub-card-title">Online Notepad</MudText>
+                            <MudText Typo="Typo.caption" Class="hub-card-sub">Cloud-synced multi-tab notes</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Class="hub-card-desc">
+                            Needed a way to quickly move text between my phone and laptop. Supabase sync makes it actually useful.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton FullWidth="true" Variant="Variant.Filled"
+                                   Style="background:#ffcc00; color:#000;"
+                                   Href="/notepad">Open</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
 
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="3" Class="hub-card">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Style="background-color: #e91e63;">
-                            <MudIcon Icon="@Icons.Material.Filled.Favorite" />
-                        </MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Valentine's Card</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">An interactive love letter</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">
-                        A classic "Will you be my Valentine?" experience — complete with
-                        escalating guilt trips, falling emojis, and a very happy cat.
-                    </MudText>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Variant="Variant.Filled" Style="background-color: #e91e63; color: white;" Href="/valentines" FullWidth="true">
-                        Open
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="hub-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Style="background:#e91e63;">
+                                <MudIcon Icon="@Icons.Material.Filled.Favorite" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1" Class="hub-card-title">Valentine's Card</MudText>
+                            <MudText Typo="Typo.caption" Class="hub-card-sub">An interactive love letter</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Class="hub-card-desc">
+                            Made on a whim to ask my then-girlfriend to be my Valentine. She said yes (eventually).
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton FullWidth="true" Variant="Variant.Filled"
+                                   Style="background:#e91e63; color:#fff;"
+                                   Href="/valentines">Open</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
 
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="3" Class="hub-card">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Style="background-color: #1db954;">
-                            <MudIcon Icon="@Icons.Material.Filled.MusicNote" />
-                        </MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Spotify That Sentence</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Turn words into a playlist</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">
-                        Type a sentence and find Spotify tracks matching each word or phrase.
-                        Greedily matches the longest possible phrases first.
-                    </MudText>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Variant="Variant.Filled" Style="background-color: #1db954; color: white;" Href="/sts" FullWidth="true">
-                        Open
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="hub-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Style="background:#1db954;">
+                                <MudIcon Icon="@Icons.Material.Filled.MusicNote" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1" Class="hub-card-title">Spotify That Sentence</MudText>
+                            <MudText Typo="Typo.caption" Class="hub-card-sub">Turn words into a playlist</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Class="hub-card-desc">
+                            Just a fun little game. Type a sentence, get a Spotify track for every word. Made for no reason at all, just vibes.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton FullWidth="true" Variant="Variant.Filled"
+                                   Style="background:#1db954; color:#000;"
+                                   Href="/sts">Open</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
 
-    </MudGrid>
-</MudContainer>
+        </MudGrid>
+    </div>
+</div>
 
 <style>
+    .hub-root {
+        height: 100vh;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .hub-root * {
+        color: #111827 !important;
+    }
+
+    .hub-inner {
+        width: 100%;
+        max-width: 1000px;
+        padding: 0 24px;
+    }
+
+    .hub-heading {
+        margin-bottom: 24px;
+    }
+
+    .hub-title {
+        font-weight: 800 !important;
+    }
+
+    .hub-subtitle {
+        color: #6b7280 !important;
+        margin-top: 4px;
+    }
+
     .hub-card {
         height: 100%;
         display: flex;
         flex-direction: column;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.15s, box-shadow 0.15s;
+        background: #ffffff !important;
     }
+
+    .hub-card .mud-card-header {
+        height: 96px;
+        align-items: flex-start;
+    }
+
     .hub-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+    }
+
+    .hub-card-title {
+        font-weight: 700 !important;
+        color: #111827 !important;
+    }
+
+    .hub-card-sub {
+        color: #6b7280 !important;
+    }
+
+    .hub-card-desc {
+        color: #6b7280 !important;
+        font-size: 0.8rem !important;
+    }
+
+    .hub-card .mud-card-content {
+        flex: 1;
     }
 </style>
