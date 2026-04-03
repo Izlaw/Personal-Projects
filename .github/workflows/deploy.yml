@@ -16,7 +16,7 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        run: dotnet publish -c Release -o release_build
+        run: dotnet publish PersonalProjects.csproj -c Release -o release_build
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

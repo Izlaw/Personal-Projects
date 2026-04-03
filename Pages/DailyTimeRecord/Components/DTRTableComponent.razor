@@ -11,7 +11,7 @@
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
-            <DtrRowComponent Entry="context"
+            <DTRRowComponent Entry="context"
                              OnChanged="@((e) => OnEntryChanged.InvokeAsync(e))"
                              OnDelete="@((key) => OnDeleteEntry.InvokeAsync(key))" />
         </RowTemplate>
