@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Thirdy\\Desktop\\Personal Projects\\PersonalProjects\\PersonalProjects.csproj": {}
+    "C:\\Users\\Thirdy\\Desktop\\myRepo\\PersonalProjects\\PersonalProjects.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Thirdy\\Desktop\\Personal Projects\\PersonalProjects\\PersonalProjects.csproj": {
+    "C:\\Users\\Thirdy\\Desktop\\myRepo\\PersonalProjects\\PersonalProjects.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Thirdy\\Desktop\\Personal Projects\\PersonalProjects\\PersonalProjects.csproj",
+        "projectUniqueName": "C:\\Users\\Thirdy\\Desktop\\myRepo\\PersonalProjects\\PersonalProjects.csproj",
         "projectName": "PersonalProjects",
-        "projectPath": "C:\\Users\\Thirdy\\Desktop\\Personal Projects\\PersonalProjects\\PersonalProjects.csproj",
+        "projectPath": "C:\\Users\\Thirdy\\Desktop\\myRepo\\PersonalProjects\\PersonalProjects.csproj",
         "packagesPath": "C:\\Users\\Thirdy\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Thirdy\\Desktop\\Personal Projects\\PersonalProjects\\obj\\",
+        "outputPath": "C:\\Users\\Thirdy\\Desktop\\myRepo\\PersonalProjects\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\DevExpress 22.2\\Components\\Offline Packages",

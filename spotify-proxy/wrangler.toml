@@ -1,0 +1,7 @@
+name = "spotify-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Secrets (never commit these — set via CLI):
+#   wrangler secret put SPOTIFY_CLIENT_ID
+#   wrangler secret put SPOTIFY_CLIENT_SECRET
