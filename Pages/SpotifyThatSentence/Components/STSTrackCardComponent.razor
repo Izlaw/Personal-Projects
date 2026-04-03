@@ -1,44 +1,136 @@
-<MudCard Class="sts-track-card" Elevation="2">
+<div class="sts-card">
     @if (Result.IsMatched && Result.Track is { } track)
     {
-        @if (!string.IsNullOrEmpty(track.AlbumArtUrl))
-        {
-            <MudCardMedia Image="@track.AlbumArtUrl" Height="140" />
-        }
-        <MudCardContent Class="pa-2">
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
-                "<strong>@Result.Word</strong>"
-            </MudText>
-            <MudText Typo="Typo.body2"><strong>@track.Name</strong></MudText>
-            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                @string.Join(", ", track.Artists)
-            </MudText>
-        </MudCardContent>
-        <MudCardActions Class="pa-2 pt-0">
-            <MudButton Size="Size.Small"
-                       Variant="Variant.Outlined"
-                       Style="border-color: #1db954; color: #1db954;"
-                       Href="@track.SpotifyUrl"
-                       Target="_blank">
-                Open in Spotify
-            </MudButton>
-        </MudCardActions>
+        <div class="sts-card-art-wrap">
+            @if (!string.IsNullOrEmpty(track.AlbumArtUrl))
+            {
+                <img class="sts-card-art" src="@track.AlbumArtUrl" alt="@track.Name" />
+            }
+            else
+            {
+                <div class="sts-card-art sts-card-art-placeholder">
+                    <svg viewBox="0 0 24 24" fill="#535353" width="40" height="40"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+                </div>
+            }
+            <a class="sts-play-btn" href="@track.SpotifyUrl" target="_blank" title="Open in Spotify">
+                <svg viewBox="0 0 24 24" fill="#000" width="20" height="20"><path d="M8 5v14l11-7z"/></svg>
+            </a>
+        </div>
+        <div class="sts-card-body">
+            <div class="sts-card-word">"@Result.Word"</div>
+            <div class="sts-card-name" title="@track.Name">@track.Name</div>
+            <div class="sts-card-artist" title="@string.Join(", ", track.Artists)">@string.Join(", ", track.Artists)</div>
+        </div>
     }
     else
     {
-        <MudCardContent Class="pa-3 text-center">
-            <MudIcon Icon="@Icons.Material.Filled.MusicOff" Color="Color.Default" Size="Size.Large" />
-            <MudText Typo="Typo.body2" Class="mt-1">"@Result.Word"</MudText>
-            <MudText Typo="Typo.caption" Color="Color.Secondary">No match</MudText>
-        </MudCardContent>
+        <div class="sts-card-art-wrap">
+            <div class="sts-card-art sts-card-art-placeholder">
+                <svg viewBox="0 0 24 24" fill="#535353" width="40" height="40"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+            </div>
+        </div>
+        <div class="sts-card-body">
+            <div class="sts-card-word">"@Result.Word"</div>
+            <div class="sts-card-name sts-card-no-match">No match found</div>
+        </div>
     }
-</MudCard>
+</div>
 
 <style>
-    .sts-track-card {
-        min-width: 160px;
-        max-width: 180px;
+    .sts-card {
+        background: #181818;
+        border-radius: 8px;
+        padding: 16px;
+        width: 160px;
         flex-shrink: 0;
+        cursor: default;
+        transition: background 0.2s;
+    }
+
+    .sts-card:hover {
+        background: #282828;
+    }
+
+    .sts-card-art-wrap {
+        position: relative;
+        margin-bottom: 12px;
+    }
+
+    .sts-card-art {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 4px;
+        display: block;
+        object-fit: cover;
+        box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+
+    .sts-card-art-placeholder {
+        background: #282828;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sts-play-btn {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background: #1DB954;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 16px rgba(0,0,0,.3);
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity 0.2s, transform 0.2s;
+        text-decoration: none;
+    }
+
+    .sts-card:hover .sts-play-btn {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .sts-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .sts-card-word {
+        font-size: 0.7rem;
+        color: #1DB954;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sts-card-name {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sts-card-artist {
+        font-size: 0.75rem;
+        color: #b3b3b3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sts-card-no-match {
+        color: #535353;
+        font-weight: 400;
     }
 </style>
 

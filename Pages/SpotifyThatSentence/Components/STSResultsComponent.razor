@@ -9,10 +9,25 @@
     .sts-results-scroll {
         display: flex;
         flex-direction: row;
-        gap: 12px;
+        gap: 16px;
         overflow-x: auto;
-        padding: 8px 4px 16px;
+        padding: 4px 4px 20px;
         align-items: flex-start;
+        scrollbar-width: thin;
+        scrollbar-color: #535353 transparent;
+    }
+
+    .sts-results-scroll::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .sts-results-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sts-results-scroll::-webkit-scrollbar-thumb {
+        background: #535353;
+        border-radius: 3px;
     }
 </style>
 

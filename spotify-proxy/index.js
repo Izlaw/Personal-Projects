@@ -13,9 +13,9 @@
  */
 
 const ALLOWED_ORIGINS = [
-    'https://personalprojects.pages.dev',  // replace with your actual Pages URL
-    'http://localhost:5000',               // local dev
-    'http://localhost:5001',
+    'https://personal-projects-oe4.pages.dev',
+    'http://localhost:5278',
+    'http://localhost:7060',
 ];
 
 export default {
