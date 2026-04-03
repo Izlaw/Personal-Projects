@@ -19,8 +19,7 @@ jobs:
         run: dotnet publish PersonalProjects.csproj -c Release -o release_build
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy release_build/wwwroot --project-name=personal-projects --commit-dirty=true
+        run: npx wrangler@latest pages deploy release_build/wwwroot --project-name=personal-projects --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
