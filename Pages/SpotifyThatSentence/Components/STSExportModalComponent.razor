@@ -1,0 +1,329 @@
+@inject IJSRuntime JS
+
+<div class="sts-modal-overlay" @onclick="HandleOverlayClick">
+    <div class="sts-modal-card" @onclick:stopPropagation="true">
+
+        <div class="sts-modal-header">
+            <div class="sts-modal-title-row">
+                <svg class="sts-modal-icon" viewBox="0 0 24 24" fill="#1DB954" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                </svg>
+                <span class="sts-modal-title">Export Results</span>
+            </div>
+            <button class="sts-modal-close" @onclick="OnClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                    <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="sts-modal-embed">
+            <div class="sts-embed-label">Song Links</div>
+            <div class="sts-embed-content">
+                @foreach (var result in Results)
+                {
+                    @if (result.IsMatched && result.Track is { } track)
+                    {
+                        <div class="sts-embed-row sts-embed-matched">
+                            <span class="sts-embed-word">@result.Word</span>
+                            <a class="sts-embed-link" href="@track.SpotifyUrl" target="_blank" rel="noopener">
+                                <svg viewBox="0 0 24 24" fill="#1DB954" width="12" height="12" style="flex-shrink:0">
+                                    <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                                </svg>
+                                @track.Name
+                            </a>
+                            <span class="sts-embed-artist">@string.Join(", ", track.Artists)</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="sts-embed-row sts-embed-unmatched">
+                            <span class="sts-embed-word sts-embed-word-dim">@result.Word</span>
+                            <span class="sts-embed-no-match">no match</span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="sts-modal-actions">
+            <button class="sts-copy-btn @(_copiedUrls ? "sts-copied" : "")" @onclick="CopyUrls">
+                @if (_copiedUrls)
+                {
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                    <span>Copied!</span>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    <span>Copy URLs</span>
+                }
+            </button>
+            <button class="sts-copy-btn @(_copiedMarkdown ? "sts-copied" : "")" @onclick="CopyMarkdown">
+                @if (_copiedMarkdown)
+                {
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                    <span>Copied!</span>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                    <span>Copy Markdown</span>
+                }
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .sts-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: sts-overlay-in 0.18s ease;
+    }
+
+    @@keyframes sts-overlay-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+
+    .sts-modal-card {
+        background: #181818;
+        border: 1px solid #1DB95440;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 480px;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px #1DB95420;
+        animation: sts-card-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        margin: 16px;
+    }
+
+    @@keyframes sts-card-in {
+        from { opacity: 0; transform: scale(0.92) translateY(12px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .sts-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid #282828;
+        flex-shrink: 0;
+    }
+
+    .sts-modal-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .sts-modal-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    .sts-modal-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.2px;
+    }
+
+    .sts-modal-close {
+        background: none;
+        border: none;
+        color: #b3b3b3;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.15s, background 0.15s;
+    }
+
+    .sts-modal-close:hover {
+        color: #fff;
+        background: #282828;
+    }
+
+    .sts-modal-embed {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 20px;
+        scrollbar-width: thin;
+        scrollbar-color: #535353 transparent;
+    }
+
+    .sts-modal-embed::-webkit-scrollbar { width: 5px; }
+    .sts-modal-embed::-webkit-scrollbar-track { background: transparent; }
+    .sts-modal-embed::-webkit-scrollbar-thumb { background: #535353; border-radius: 3px; }
+
+    .sts-embed-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #1DB954;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .sts-embed-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .sts-embed-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 6px;
+        transition: background 0.12s;
+    }
+
+    .sts-embed-matched:hover {
+        background: #282828;
+    }
+
+    .sts-embed-unmatched {
+        opacity: 0.45;
+    }
+
+    .sts-embed-word {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #fff;
+        min-width: 60px;
+        flex-shrink: 0;
+    }
+
+    .sts-embed-word-dim {
+        color: #b3b3b3;
+    }
+
+    .sts-embed-link {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #1DB954;
+        font-size: 0.8rem;
+        text-decoration: none;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .sts-embed-link:hover {
+        text-decoration: underline;
+    }
+
+    .sts-embed-artist {
+        font-size: 0.7rem;
+        color: #535353;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+        flex-shrink: 0;
+    }
+
+    .sts-embed-no-match {
+        font-size: 0.72rem;
+        color: #535353;
+        font-style: italic;
+    }
+
+    .sts-modal-actions {
+        display: flex;
+        gap: 8px;
+        padding: 14px 20px;
+        border-top: 1px solid #282828;
+        flex-shrink: 0;
+    }
+
+    .sts-copy-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 9px 16px;
+        border-radius: 500px;
+        border: 1px solid #535353;
+        background: transparent;
+        color: #b3b3b3;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .sts-copy-btn:hover {
+        border-color: #1DB954;
+        color: #1DB954;
+        background: #1DB95410;
+    }
+
+    .sts-copy-btn.sts-copied {
+        border-color: #1DB954;
+        color: #1DB954;
+        background: #1DB95418;
+    }
+</style>
+
+@code {
+    [Parameter] public List<SpotifyMatchResultModel> Results { get; set; } = new();
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool _copiedUrls = false;
+    private bool _copiedMarkdown = false;
+
+    private void HandleOverlayClick() => OnClose.InvokeAsync();
+
+    private async Task CopyUrls()
+    {
+        var urls = Results
+            .Where(r => r.IsMatched && r.Track is not null)
+            .Select(r => r.Track!.SpotifyUrl);
+        var text = string.Join("\n", urls);
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        _copiedUrls = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        _copiedUrls = false;
+        StateHasChanged();
+    }
+
+    private async Task CopyMarkdown()
+    {
+        var lines = Results.Select(r =>
+            r.IsMatched && r.Track is { } track
+                ? $"[{r.Word}]({track.SpotifyUrl})"
+                : r.Word);
+        var text = string.Join("\n", lines);
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        _copiedMarkdown = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        _copiedMarkdown = false;
+        StateHasChanged();
+    }
+}
